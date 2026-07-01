@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 600;
+  src: url('/assets/fonts/lato-600.woff2') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/assets/fonts/ibm-plex-mono.woff2') format('woff2');
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  @apply font-inter antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input[type='time']::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+button,
+input,
+select,
+textarea,
+span {
+  @apply font-inter;
+}
+
+@layer base {
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-lato;
+  }
+
+  h5,
+  p {
+    @apply font-inter;
+  }
+
+  /* removido temporariamente */
+  /* *:focus {
+    outline: none;
+  } */
+}
+
+.bullet ul {
+  list-style: disc;
+}
+
+.scrollbar-x-visible {
+  scrollbar-width: thin;
+  scrollbar-color: #bfbfbf #f3f3f3;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar {
+  height: 10px;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar-track {
+  background: #f3f3f3;
+  border-radius: 9999px;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 9999px;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
