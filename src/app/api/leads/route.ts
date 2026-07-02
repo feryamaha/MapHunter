@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runScraping } from "@/lib/scraping-engine";
+import { resolveCepCity } from "@/lib/free-places-search";
 import { enrichWithCnpj } from "@/lib/cnpj-enrichment";
 import { qualifyLead } from "@/lib/lead-qualifier";
 import { applyClassification } from "@/lib/lead-classifier";
@@ -84,11 +85,23 @@ export async function POST(request: NextRequest) {
       `[qualify] ${scrapingResult.leads.length} brutos → ${qualifiedLeads.length} qualificados (${excludedCount} descartados)`,
     );
 
-    // Pista de município para refinar a busca de CNPJ por nome (ignora CEP).
-    const cityHint =
-      typeof location === "string" && !CEP_LIKE.test(location.trim())
-        ? location.trim()
-        : null;
+    // Pistas geográficas (município/UF) para refinar a busca de CNPJ por nome.
+    // Busca por CEP: resolve o município via ViaCEP/BrasilAPI — antes o CEP era
+    // ignorado e a CasaDosDados pesquisava sem filtro geográfico, o que derruba
+    // a taxa de match (similaridade < 0.6 com homônimos de outras cidades).
+    const locationText = location.trim();
+    let cityHint: string | null = null;
+    let ufHint: string | null = null;
+    if (CEP_LIKE.test(locationText)) {
+      const resolved = await resolveCepCity(locationText);
+      cityHint = resolved?.city ?? null;
+      ufHint = resolved?.state ?? null;
+    } else {
+      cityHint = locationText;
+      // "Marília - SP" / "Marília, SP" → UF como filtro adicional.
+      const ufMatch = locationText.match(/[-,/]\s*([A-Za-z]{2})\s*$/);
+      ufHint = ufMatch ? ufMatch[1]!.toUpperCase() : null;
+    }
 
     // Camada 2: Enriquecimento CNPJ (BrasilAPI) + Classificação.
     // Concorrência limitada para não sobrecarregar as APIs gratuitas.
@@ -102,6 +115,7 @@ export async function POST(request: NextRequest) {
           address: rawLead.address,
           knownCnpj: rawLead.cnpj,
           city: cityHint,
+          uf: ufHint,
         });
 
         const details = cnpjData.details;

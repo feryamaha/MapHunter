@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Icon } from "@/script/Icon";
 import { Pagination } from "@/components/ui/Pagination";
+import { Tooltip } from "@/components/ui/Tooltip";
 import {
   Table,
   TableContainer,
@@ -33,9 +34,40 @@ function instagramHandle(url: string): string {
 
 const EmptyDash = () => <span className="text-neutral-300">—</span>;
 
-// Grid da tabela (desktop): larguras equilibradas + coluna de detalhes.
+// Grid da tabela (desktop). A coluna "Empresa" é fixa (sticky) à esquerda:
+// quando houver scroll horizontal em telas menores, o nome nunca sai de vista.
+// Website + Instagram foram unificados em "Presença digital" (empilhados),
+// reduzindo a largura total e eliminando o scroll horizontal em desktops comuns.
 const gridCols =
-  "grid grid-cols-[40px_minmax(190px,1.5fr)_140px_172px_minmax(170px,1.3fr)_178px_minmax(150px,1.1fr)_150px] items-center gap-[14px] px-[18px]";
+  "grid grid-cols-[minmax(224px,1.5fr)_116px_152px_minmax(184px,1.3fr)_152px_minmax(158px,1.1fr)] items-center gap-[14px] pr-[18px]";
+
+// Célula fixa (Empresa): precisa de fundo próprio para cobrir o conteúdo que
+// passa por baixo durante o scroll horizontal + sombra sutil de profundidade.
+const stickyCellBase =
+  "sticky left-0 z-[1] self-stretch flex items-center pl-[18px] " +
+  "shadow-[10px_0_14px_-12px_rgba(20,46,84,0.25)]";
+
+// Tooltip padrão para conteúdo truncado: card compacto logo abaixo do texto.
+function TruncateTooltip({
+  text,
+  children,
+}: {
+  text: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip
+      contentText={text}
+      hideIcon
+      compact
+      showArrow={false}
+      containerClassName="relative block min-w-0 max-w-full"
+      className="left-0 top-full mt-1.5 z-30 max-w-[340px] break-words"
+    >
+      {children}
+    </Tooltip>
+  );
+}
 
 // Cor do indicador de situação (bolinha) por status da Receita.
 function situationDotClass(situation: string | null): string {
@@ -308,6 +340,9 @@ function LeadCard({
   );
 }
 
+const headClass =
+  "font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold";
+
 export function LeadsTable({ leads, className }: LeadsTableProps) {
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -335,8 +370,17 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
 
   if (leads.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 text-neutral-500 font-inter text-sm">
-        Nenhum lead encontrado. Use a barra de pesquisa para começar.
+      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-stroke-200 bg-white py-14 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-25">
+          <Icon name="iconLeads" className="h-6 w-6 text-primary-400" />
+        </div>
+        <div className="font-lato text-base font-bold text-neutral-800">
+          Nenhum lead para exibir
+        </div>
+        <p className="max-w-[380px] font-inter text-sm text-neutral-500">
+          Ajuste os filtros ativos ou faça uma nova busca por localização e
+          nicho para encontrar empresas.
+        </p>
       </div>
     );
   }
@@ -362,8 +406,8 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
 
       {/* ─── Layout tablet/desktop: tabela em grid ─── */}
       <div className="hidden @tablet:block">
-        <TableContainer className="overflow-x-auto overflow-y-auto max-h-[62vh]">
-          <Table className="min-w-[1140px]">
+        <TableContainer className="overflow-x-auto overflow-y-auto max-h-[62vh] scrollbar-custom">
+          <Table className="min-w-[1060px]">
             <TableHeader sticky>
               <TableRow
                 className={twMerge(
@@ -371,16 +415,20 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
                   "bg-surface-table-header hover:bg-surface-table-header border-b border-stroke-100",
                 )}
               >
-                <TableHead className="text-center font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">
-                  <span className="sr-only">Detalhes</span>
+                <TableHead
+                  className={twMerge(
+                    headClass,
+                    stickyCellBase,
+                    "z-[2] bg-surface-table-header h-auto",
+                  )}
+                >
+                  Empresa
                 </TableHead>
-                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Empresa</TableHead>
-                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Categoria</TableHead>
-                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">CNPJ</TableHead>
-                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Endereço</TableHead>
-                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Contato</TableHead>
-                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Website</TableHead>
-                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Instagram</TableHead>
+                <TableHead className={headClass}>Categoria</TableHead>
+                <TableHead className={headClass}>CNPJ</TableHead>
+                <TableHead className={headClass}>Endereço</TableHead>
+                <TableHead className={headClass}>WhatsApp</TableHead>
+                <TableHead className={headClass}>Presença digital</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="border-b-0">
@@ -391,18 +439,25 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
                     <TableRow
                       className={twMerge(
                         gridCols,
-                        "transition-colors hover:bg-surface-table-hover",
+                        "group/row transition-colors hover:bg-surface-table-hover",
                         isOpen && "bg-surface-table-hover",
                       )}
                     >
-                      <TableCell className="flex items-center justify-center">
+                      {/* Empresa: coluna fixa com botão de detalhes + nome */}
+                      <TableCell
+                        className={twMerge(
+                          stickyCellBase,
+                          "gap-3 py-3 bg-white transition-colors group-hover/row:bg-surface-table-hover",
+                          isOpen && "bg-surface-table-hover",
+                        )}
+                      >
                         <button
                           type="button"
                           onClick={() => toggleExpanded(lead.id)}
                           aria-label={isOpen ? "Recolher detalhes" : "Expandir detalhes"}
                           aria-expanded={isOpen}
                           className={twMerge(
-                            "flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border transition-colors",
+                            "flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] border transition-colors",
                             isOpen
                               ? "border-primary-100 bg-primary-50 text-primary-500"
                               : "border-stroke-100 bg-secondary-50 text-neutral-500 hover:bg-primary-25 hover:text-primary-500",
@@ -416,25 +471,22 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
                             )}
                           />
                         </button>
-                      </TableCell>
-
-                      <TableCell className="min-w-0" truncate>
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span
-                            className={twMerge(
-                              "w-2 h-2 shrink-0 rounded-full",
-                              situationDotClass(lead.situation),
-                            )}
-                          />
-                          <span className="truncate font-semibold text-neutral-900">
+                        <span
+                          className={twMerge(
+                            "w-2 h-2 shrink-0 rounded-full",
+                            situationDotClass(lead.situation),
+                          )}
+                        />
+                        <TruncateTooltip text={lead.name}>
+                          <span className="block truncate font-inter text-sm font-semibold leading-snug text-neutral-900">
                             {lead.name}
                           </span>
-                        </div>
+                        </TruncateTooltip>
                       </TableCell>
 
-                      <TableCell className="truncate" truncate>
+                      <TableCell className="min-w-0 py-3">
                         {lead.category ? (
-                          <span className="inline-flex items-center rounded-full bg-primary-25 px-2.5 py-0.5 text-xs font-medium text-primary-400 capitalize">
+                          <span className="inline-block max-w-full truncate rounded-full bg-primary-25 px-2.5 py-0.5 text-xs font-medium text-primary-400 capitalize">
                             {lead.category}
                           </span>
                         ) : (
@@ -442,19 +494,30 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
                         )}
                       </TableCell>
 
-                      <TableCell className="truncate font-IbmPlexMono text-[12.5px] text-neutral-600" truncate>
-                        {lead.cnpj ? (
-                          <span title={maskCnpj(lead.cnpj)}>{maskCnpj(lead.cnpj)}</span>
+                      <TableCell className="min-w-0 py-3 font-IbmPlexMono text-[12.5px] text-neutral-600 whitespace-nowrap">
+                        {lead.cnpj ? maskCnpj(lead.cnpj) : <EmptyDash />}
+                      </TableCell>
+
+                      <TableCell className="min-w-0 py-3 text-[13px] leading-snug text-neutral-600">
+                        {lead.address ? (
+                          <TruncateTooltip text={lead.address}>
+                            <span
+                              className="block overflow-hidden"
+                              style={{
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                              }}
+                            >
+                              {lead.address}
+                            </span>
+                          </TruncateTooltip>
                         ) : (
                           <EmptyDash />
                         )}
                       </TableCell>
 
-                      <TableCell className="text-neutral-600 truncate" truncate>
-                        {lead.address || <EmptyDash />}
-                      </TableCell>
-
-                      <TableCell>
+                      <TableCell className="py-3">
                         {lead.phone ? (
                           <WhatsappLink phone={lead.phone} />
                         ) : (
@@ -462,40 +525,39 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
                         )}
                       </TableCell>
 
-                      <TableCell className="truncate" truncate>
-                        {lead.website ? (
-                          <a
-                            href={lead.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-primary-500 hover:text-primary-600 hover:underline truncate"
-                            title={lead.website}
-                          >
-                            <Icon name="iconWebsite" className="w-4 h-4 shrink-0" />
-                            <span className="truncate">{prettyUrl(lead.website)}</span>
-                          </a>
-                        ) : (
-                          <EmptyDash />
-                        )}
-                      </TableCell>
-
-                      <TableCell className="truncate" truncate>
-                        {lead.instagram ? (
-                          <a
-                            href={lead.instagram}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-pink-600 hover:text-pink-700 hover:underline truncate"
-                            title={lead.instagram}
-                          >
-                            <Icon name="iconInstagram" className="w-4 h-4 shrink-0" />
-                            <span className="truncate">
-                              {instagramHandle(lead.instagram)}
-                            </span>
-                          </a>
-                        ) : (
-                          <EmptyDash />
-                        )}
+                      {/* Presença digital: site + instagram empilhados */}
+                      <TableCell className="min-w-0 py-3">
+                        {!lead.website && !lead.instagram && <EmptyDash />}
+                        <div className="flex min-w-0 flex-col gap-1">
+                          {lead.website && (
+                            <TruncateTooltip text={lead.website}>
+                              <a
+                                href={lead.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex min-w-0 items-center gap-1.5 text-[13px] text-primary-500 hover:text-primary-600 hover:underline"
+                              >
+                                <Icon name="iconWebsite" className="w-4 h-4 shrink-0" />
+                                <span className="truncate">{prettyUrl(lead.website)}</span>
+                              </a>
+                            </TruncateTooltip>
+                          )}
+                          {lead.instagram && (
+                            <TruncateTooltip text={lead.instagram}>
+                              <a
+                                href={lead.instagram}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex min-w-0 items-center gap-1.5 text-[13px] text-pink-600 hover:text-pink-700 hover:underline"
+                              >
+                                <Icon name="iconInstagram" className="w-4 h-4 shrink-0" />
+                                <span className="truncate">
+                                  {instagramHandle(lead.instagram)}
+                                </span>
+                              </a>
+                            </TruncateTooltip>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                     {isOpen && <CnpjDetailsPanel lead={lead} />}

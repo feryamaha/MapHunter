@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { twMerge } from "tailwind-merge";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 import { Icon } from "@/script/Icon";
 import { useSearchBar } from "@/hooks/dashboard-layout/useSearchBar.hook";
 import { radiusOptions } from "@/schema/search-params.schema";
@@ -105,7 +106,11 @@ export function SearchBar({ onSubmit, defaults, className }: SearchBarProps) {
         disabled={isSearching}
         className="rounded-2xl @tablet:rounded-full shrink-0 @tablet:w-auto @tablet:px-8 h-14 mt-2 @tablet:mt-0"
       >
-        <Icon name="iconSearch" className="w-5 h-5" />
+        {isSearching ? (
+          <Spinner className="w-5 h-5 border-[2.5px]" />
+        ) : (
+          <Icon name="iconSearch" className="w-5 h-5" />
+        )}
         <span className={isSearching ? "animate-pulse" : ""}>
           {isSearching ? "Buscando..." : "Buscar"}
         </span>

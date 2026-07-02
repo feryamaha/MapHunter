@@ -9,6 +9,8 @@ import { DropdownMenu } from "@/components/ui/Dropdown";
 import { Icon } from "@/script/Icon";
 import { SearchBar } from "@/components/shared-dashboard/SearchBar";
 import { LeadsTable } from "@/components/shared-dashboard/LeadsTable";
+import { LeadsTableSkeleton } from "@/components/shared-dashboard/LeadsTableSkeleton";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   useLeadsData,
   useLeadsFilters,
@@ -178,7 +180,9 @@ function DashboardContent() {
       : activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1);
 
   return (
-    <Container className="py-8">
+    // Padding lateral reduzido (vs. 80px do Container padrão): o dashboard é
+    // uma tela de trabalho — a tabela precisa da largura útil para não rolar.
+    <Container variant="reset-0" className="px-4 @tablet:px-8 py-8">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1 @tablet:text-center @tablet:items-center">
           <h2 className="font-lato text-2xl @tablet:text-3xl font-bold text-neutral-900">
@@ -222,13 +226,27 @@ function DashboardContent() {
         )}
 
         {loading && (
-          <Alerts
-            type="info"
-            layout="flat"
-            styleVariant="filled"
-            title="Buscando leads..."
-            description="Aguarde enquanto mineramos os dados da região selecionada."
-          />
+          <>
+            {/* Banner de progresso com spinner: feedback imediato e contínuo
+                enquanto as fontes externas respondem (pode levar vários segundos). */}
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center gap-4 rounded-lg border border-auxiliary-info-border bg-auxiliary-info-background p-4 shadow-10"
+            >
+              <Spinner className="h-5 w-5 border-[2.5px] text-auxiliary-info-default" />
+              <div className="flex flex-col gap-0.5">
+                <span className="font-inter text-base font-medium text-auxiliary-info-default">
+                  Buscando leads...
+                </span>
+                <span className="font-inter text-xs text-secondary-600">
+                  Consultando as fontes de dados e enriquecendo com CNPJ. Isso
+                  pode levar até um minuto.
+                </span>
+              </div>
+            </div>
+            <LeadsTableSkeleton />
+          </>
         )}
 
         {error && (
@@ -306,12 +324,17 @@ function DashboardContent() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-inter text-xs text-neutral-400 whitespace-nowrap">
+                  {filteredLeads.length} de {data.length} leads
+                </span>
                 <Button
                   variant="secondary"
                   size="sm"
+                  disabled={filteredLeads.length === 0}
                   onClick={() => downloadCsv(filteredLeads)}
                   className="w-auto gap-2"
+                  title="Exportar CSV (UTF-8, compatível com Excel)"
                 >
                   <Icon name="iconDownload" className="w-4 h-4" />
                   CSV
@@ -319,8 +342,10 @@ function DashboardContent() {
                 <Button
                   variant="secondary"
                   size="sm"
+                  disabled={filteredLeads.length === 0}
                   onClick={() => downloadXlsx(filteredLeads)}
                   className="w-auto gap-2"
+                  title="Exportar planilha Excel (.xlsx)"
                 >
                   <Icon name="iconDownload" className="w-4 h-4" />
                   XLSX

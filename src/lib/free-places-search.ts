@@ -107,6 +107,20 @@ async function resolveCep(cep: string): Promise<ResolvedCep> {
   throw new Error(`CEP não encontrado: "${cep}"`);
 }
 
+// Resolve cidade/UF de um CEP para uso como pista geográfica fora do fluxo de
+// geocoding (ex.: refinar a busca de CNPJ por nome na rota /api/leads).
+// Best-effort: retorna null se ViaCEP e BrasilAPI falharem.
+export async function resolveCepCity(
+  cep: string,
+): Promise<{ city: string; state: string } | null> {
+  try {
+    const resolved = await resolveCep(cep);
+    return { city: resolved.city, state: resolved.state };
+  } catch {
+    return null;
+  }
+}
+
 // Structured Nominatim geocoding. A structured query (city/state/country) is far
 // more reliable than a free-text street address, which frequently returns empty.
 async function geocodeStructured(params: {

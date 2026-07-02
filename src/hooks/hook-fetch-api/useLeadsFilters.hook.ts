@@ -9,6 +9,8 @@ export type FilterType =
   | "no-site"
   | "with-phone"
   | "with-instagram"
+  | "with-cnpj"
+  | "no-cnpj"
   | "no-data";
 
 export const presenceFilterOptions: { value: FilterType; label: string }[] = [
@@ -17,6 +19,8 @@ export const presenceFilterOptions: { value: FilterType; label: string }[] = [
   { value: "no-site", label: "Sem site" },
   { value: "with-phone", label: "Com telefone" },
   { value: "with-instagram", label: "Com Instagram" },
+  { value: "with-cnpj", label: "Com CNPJ" },
+  { value: "no-cnpj", label: "Sem CNPJ" },
   { value: "no-data", label: "Sem dados (site/tel/insta)" },
 ];
 
@@ -70,6 +74,10 @@ export function useLeadsFilters(leads: Lead[]) {
           return hasValue(lead.phone);
         case "with-instagram":
           return hasValue(lead.instagram);
+        case "with-cnpj":
+          return hasValue(lead.cnpj);
+        case "no-cnpj":
+          return !hasValue(lead.cnpj);
         case "no-data":
           return (
             !hasValue(lead.website) &&
