@@ -84,11 +84,8 @@ export function FloatingLabelInput<
             borderRadius: '0.5rem',
             padding: '1.32rem',
             width: '90%',
-            height: '98%',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            height: '90%',
+
           }}
         />
         <label
