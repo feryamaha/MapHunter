@@ -4,6 +4,7 @@ import clsx from "clsx";
 import type { FieldValues } from "react-hook-form";
 import type { FloatingLabelInputProps } from "@/types/dashboard-layout/floating-label-input.types";
 import { useFloatingLabelInput } from "@/hooks/dashboard-layout/useFloatingLabelInput.hook";
+import { borderRadius, padding } from "tailwindcss/defaultTheme";
 
 export function FloatingLabelInput<
   TFieldValues extends FieldValues = FieldValues,
@@ -59,10 +60,10 @@ export function FloatingLabelInput<
   const sizeClass = inputSize === "sm" ? "h-[32px]" : inputSize === "md" ? "h-[36px]" : "h-12";
 
   const resolvedInputClassName = clsx(
-    `w-full ${sizeClass} border rounded-lg px-4 pt-2 pb-2 transition-colors focus:outline-none focus:ring-1`,
+    `w-full ${sizeClass} border rounded-lg px-4 pt-2 pb-2 transition-colors focus:outline-none focus:ring-1 focus:rounded-lg overflow-hidden`,
     hasError
       ? "border-primary-400 text-primary-400 ring-primary-400 focus:ring-primary-400 focus:border-primary-400"
-      : "border-secondary-100 text-neutral-900 ring-neutral-900 focus:ring-neutral-900 focus:border-neutral-900",
+      : "border-secondary-100 text-neutral-900 ring-neutral-900 focus:ring-primary-200 focus:border-primary-200 focus:rounded-lg",
     readOnly ? "cursor-default bg-neutral-50 " : "hover:border-neutral-900",
     inputClassName,
   );
@@ -77,7 +78,18 @@ export function FloatingLabelInput<
             handleChange(e);
             if (registerProps.onChange) registerProps.onChange(e);
           }}
-          className={`${resolvedInputClassName} focus-visible:outline-2 focus-visible:outline-offset-2`}
+          className={`${resolvedInputClassName} focus-visible:outline-2 focus-visible:outline-offset-2 focus:rounded-lg`}
+          style={{
+            WebkitBorderRadius: '0.5rem',
+            borderRadius: '0.5rem',
+            padding: '1.32rem',
+            width: '90%',
+            height: '98%',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
         />
         <label
           className={`absolute left-4 pointer-events-none font-normal ${disableLabelFloat
@@ -103,6 +115,10 @@ export function FloatingLabelInput<
         value={uncontrolledValue}
         onChange={handleChange}
         className={`${resolvedInputClassName}`}
+        style={{
+          WebkitBorderRadius: '0.5rem',
+          borderRadius: '0.5rem',
+        }}
       />
       <label
         className={`absolute left-4 pointer-events-none font-normal ${disableLabelFloat
