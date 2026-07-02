@@ -107,6 +107,24 @@ export default {
           100: '#E6E6E6',
           200: '#D1D1D1',
           300: '#B0B0B0'
+        },
+        sidebar: {
+          'gradient-end': '#0B1730',
+          'text': '#EAF1FB',
+          'text-muted': '#8FA6C9',
+          'text-label': '#5E7BA6',
+          'text-inactive': '#AEC2E0',
+          'danger': '#FF6F61',
+          'danger-text': '#FF9E93',
+          'danger-hover': '#FF8A80',
+        },
+        surface: {
+          'app': '#EFF2F7',
+          'table-header': '#F5F8FC',
+          'table-hover': '#F6F9FD',
+          'table-divider': '#EFEFEF',
+          'detail-panel': '#F7FAFD',
+          'detail-border': '#E6EDF6',
         }
       },
       backgroundImage: {

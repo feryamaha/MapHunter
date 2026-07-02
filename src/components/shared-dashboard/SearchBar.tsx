@@ -21,7 +21,8 @@ export function SearchBar({ onSubmit, defaults, className }: SearchBarProps) {
     defaults,
   );
 
-  const fieldClasses = "border-0 rounded-none bg-transparent focus:ring-0 h-14 px-5 hover:border-0";
+  const fieldClasses =
+    "border-0 rounded-none bg-transparent focus:ring-0 h-14 px-5 hover:border-0";
 
   return (
     <form
@@ -29,13 +30,13 @@ export function SearchBar({ onSubmit, defaults, className }: SearchBarProps) {
       className={twMerge(
         clsx(
           "flex flex-col @tablet:flex-row items-stretch",
-          "bg-white rounded-3xl @tablet:rounded-full shadow-10 p-2",
+          "bg-white rounded-3xl @tablet:rounded-full shadow-[0_2px_10px_0_rgba(20,46,84,0.06)] p-2",
           "border border-stroke-100",
         ),
         className,
       )}
     >
-      <div className="flex-1 min-w-0 flex items-center @tablet:pl-2">
+      <div className="flex-1 min-w-0 flex items-center @tablet:pl-3">
         <Icon
           name="iconSearch"
           className="w-5 h-5 text-neutral-400 shrink-0 ml-3 @tablet:ml-0"
@@ -53,15 +54,19 @@ export function SearchBar({ onSubmit, defaults, className }: SearchBarProps) {
         />
       </div>
 
-      <div className="hidden @tablet:block w-px bg-stroke-100 my-2" />
+      <div className="hidden @tablet:block w-px bg-stroke-100 my-2.5" />
 
       <div className="relative w-full @tablet:w-[220px] shrink-0">
+        <Icon
+          name="iconSearch"
+          className="hidden @tablet:block w-[18px] h-[18px] text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
         <select
           {...register("radius")}
           aria-label="Raio de alcance"
           className={twMerge(
             clsx(
-              "w-full h-14 pl-5 pr-10 text-sm font-inter text-neutral-900",
+              "w-full h-14 pl-5 @tablet:pl-11 pr-10 text-sm font-inter text-neutral-900",
               "border-0 bg-transparent rounded-none cursor-pointer",
               "focus:outline-none appearance-none",
             ),
@@ -79,7 +84,7 @@ export function SearchBar({ onSubmit, defaults, className }: SearchBarProps) {
         />
       </div>
 
-      <div className="hidden @tablet:block w-px bg-stroke-100 my-2" />
+      <div className="hidden @tablet:block w-px bg-stroke-100 my-2.5" />
 
       <div className="flex-1 min-w-0 flex items-center">
         <FloatingLabelInput
@@ -98,10 +103,10 @@ export function SearchBar({ onSubmit, defaults, className }: SearchBarProps) {
         variant="primary"
         size="lg"
         disabled={isSearching}
-        className="rounded-full shrink-0 @tablet:w-auto @tablet:px-8 h-14 mt-2 @tablet:mt-0"
+        className="rounded-2xl @tablet:rounded-full shrink-0 @tablet:w-auto @tablet:px-8 h-14 mt-2 @tablet:mt-0"
       >
         <Icon name="iconSearch" className="w-5 h-5" />
-        <span className={isSearching ? "animate-pulse text-black" : ""}>
+        <span className={isSearching ? "animate-pulse" : ""}>
           {isSearching ? "Buscando..." : "Buscar"}
         </span>
       </Button>

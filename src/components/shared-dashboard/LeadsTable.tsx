@@ -33,8 +33,24 @@ function instagramHandle(url: string): string {
 
 const EmptyDash = () => <span className="text-neutral-300">—</span>;
 
+// Grid da tabela (desktop): larguras equilibradas + coluna de detalhes.
 const gridCols =
-  "grid grid-cols-[36px_minmax(150px,1.3fr)_110px_150px_minmax(170px,1.3fr)_140px_minmax(150px,1.1fr)_minmax(130px,0.9fr)] items-center gap-3 px-4";
+  "grid grid-cols-[40px_minmax(190px,1.5fr)_140px_172px_minmax(170px,1.3fr)_178px_minmax(150px,1.1fr)_150px] items-center gap-[14px] px-[18px]";
+
+// Cor do indicador de situação (bolinha) por status da Receita.
+function situationDotClass(situation: string | null): string {
+  switch (situation) {
+    case "ATIVA":
+      return "bg-complementary-500";
+    case "SUSPENSA":
+      return "bg-auxiliary-warning-default";
+    case "INAPTA":
+    case "BAIXADA":
+      return "bg-auxiliary-danger-default";
+    default:
+      return "bg-neutral-300";
+  }
+}
 
 function formatCurrency(value: number | null): string {
   if (value === null) return "—";
@@ -68,7 +84,7 @@ function DetailField({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-inter text-xs font-medium uppercase tracking-wide text-neutral-400">
+      <span className="font-IbmPlexMono text-[10.5px] font-medium uppercase tracking-[0.05em] text-neutral-400">
         {label}
       </span>
       <span className="font-inter text-sm text-neutral-800 break-words">
@@ -82,7 +98,7 @@ function CnpjDetailsPanel({ lead }: { lead: Lead }) {
   const d = lead.cnpjDetails;
   if (!d) {
     return (
-      <div className="bg-secondary-25 px-6 py-4 font-inter text-sm text-neutral-500">
+      <div className="bg-surface-detail-panel border-t border-surface-detail-border px-6 py-4 font-inter text-sm text-neutral-500">
         Nenhum dado de CNPJ encontrado para esta empresa na Receita Federal
         (via BrasilAPI).
       </div>
@@ -90,12 +106,12 @@ function CnpjDetailsPanel({ lead }: { lead: Lead }) {
   }
 
   return (
-    <div className="bg-secondary-25 px-6 py-5">
+    <div className="bg-surface-detail-panel border-t border-surface-detail-border px-6 py-5">
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="font-lato text-sm font-bold text-neutral-900">
           {d.razaoSocial ?? lead.name}
         </span>
-        <span className="font-inter text-xs text-neutral-500">
+        <span className="font-IbmPlexMono text-xs text-neutral-500">
           {maskCnpj(d.cnpj)}
         </span>
         {d.situation && (
@@ -143,7 +159,7 @@ function CnpjDetailsPanel({ lead }: { lead: Lead }) {
 
       {d.secondaryCnaes.length > 0 && (
         <div className="mt-4">
-          <span className="font-inter text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <span className="font-IbmPlexMono text-[10.5px] font-medium uppercase tracking-[0.05em] text-neutral-400">
             Atividades secundárias
           </span>
           <div className="mt-1 flex flex-wrap gap-1.5">
@@ -161,7 +177,7 @@ function CnpjDetailsPanel({ lead }: { lead: Lead }) {
 
       {d.partners.length > 0 && (
         <div className="mt-4">
-          <span className="font-inter text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <span className="font-IbmPlexMono text-[10.5px] font-medium uppercase tracking-[0.05em] text-neutral-400">
             Quadro societário
           </span>
           <ul className="mt-1 flex flex-col gap-1">
@@ -176,6 +192,118 @@ function CnpjDetailsPanel({ lead }: { lead: Lead }) {
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Links de contato reutilizados na tabela e nos cards mobile. */
+function WhatsappLink({ phone }: { phone: string }) {
+  return (
+    <a
+      href={`https://wa.me/${phone.replace(/\D/g, "")}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 text-complementary-700 hover:text-complementary-800 font-semibold whitespace-nowrap"
+    >
+      <Icon name="iconWhatsapp" className="w-4 h-4 shrink-0" />
+      <span className="font-IbmPlexMono text-[12.5px]">{maskPhone(phone)}</span>
+    </a>
+  );
+}
+
+// Card usado no layout mobile (abaixo de @tablet).
+function LeadCard({
+  lead,
+  isOpen,
+  onToggle,
+}: {
+  lead: Lead;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="rounded-[15px] border border-stroke-100 bg-white shadow-10 overflow-hidden">
+      <div className="p-4 flex flex-col gap-3">
+        <div className="flex items-start gap-2.5">
+          <span
+            className={twMerge(
+              "mt-[5px] w-[9px] h-[9px] shrink-0 rounded-full",
+              situationDotClass(lead.situation),
+            )}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="font-lato font-bold text-[15px] leading-tight text-neutral-900">
+              {lead.name}
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              {lead.category && (
+                <span className="rounded-full bg-primary-25 px-2.5 py-0.5 text-[11.5px] font-medium text-primary-400 capitalize">
+                  {lead.category}
+                </span>
+              )}
+              {lead.cnpj && (
+                <span className="font-IbmPlexMono text-[11.5px] text-neutral-400">
+                  {maskCnpj(lead.cnpj)}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={isOpen ? "Recolher detalhes" : "Expandir detalhes"}
+            aria-expanded={isOpen}
+            className="shrink-0 flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border border-stroke-100 bg-secondary-50 text-neutral-500 hover:bg-primary-25 hover:text-primary-500"
+          >
+            <Icon
+              name="iconArrow2Down"
+              className={twMerge("h-4 w-4 transition-transform", isOpen && "rotate-180")}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-start gap-2 text-neutral-600 text-[12.5px]">
+          <Icon name="iconSearch" className="w-3.5 h-3.5 mt-0.5 shrink-0 text-neutral-300" />
+          <span>{lead.address || "—"}</span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {lead.phone && (
+            <a
+              href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-[9px] bg-complementary-25 px-3 py-1.5 text-[12.5px] font-semibold text-complementary-700"
+            >
+              <Icon name="iconWhatsapp" className="w-3.5 h-3.5" />
+              WhatsApp
+            </a>
+          )}
+          {lead.website && (
+            <a
+              href={lead.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-[9px] bg-primary-25 px-3 py-1.5 text-[12.5px] font-medium text-primary-500"
+            >
+              <Icon name="iconWebsite" className="w-3.5 h-3.5" />
+              Site
+            </a>
+          )}
+          {lead.instagram && (
+            <a
+              href={lead.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-[9px] bg-pink-50 px-3 py-1.5 text-[12.5px] font-medium text-pink-600"
+            >
+              <Icon name="iconInstagram" className="w-3.5 h-3.5" />
+              Instagram
+            </a>
+          )}
+        </div>
+      </div>
+      {isOpen && <CnpjDetailsPanel lead={lead} />}
     </div>
   );
 }
@@ -216,149 +344,168 @@ export function LeadsTable({ leads, className }: LeadsTableProps) {
   return (
     <div
       className={twMerge(
-        clsx("rounded-xl border border-stroke-100 bg-white shadow-10 overflow-hidden"),
+        clsx("rounded-2xl border border-stroke-100 bg-white shadow-10 overflow-hidden"),
         className,
       )}
     >
-      <TableContainer className="overflow-x-auto overflow-y-auto max-h-[65vh]">
-        <Table className="min-w-[1180px]">
-          <TableHeader sticky>
-            <TableRow
-              className={twMerge(
-                gridCols,
-                "bg-secondary-50 hover:bg-secondary-50 border-b border-stroke-100",
-              )}
-            >
-              <TableHead>
-                <span className="sr-only">Detalhes</span>
-              </TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>CNPJ</TableHead>
-              <TableHead>Endereço</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Website</TableHead>
-              <TableHead>Instagram</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="border-b-0">
-            {pageLeads.map((lead) => {
-              const isOpen = expanded.has(lead.id);
-              return (
-              <div key={lead.id} className="border-b border-stroke-100 last:border-b-0">
+      {/* ─── Layout mobile: cards empilhados (abaixo de @tablet) ─── */}
+      <div className="@tablet:hidden flex flex-col gap-3 p-3 bg-secondary-25">
+        {pageLeads.map((lead) => (
+          <LeadCard
+            key={lead.id}
+            lead={lead}
+            isOpen={expanded.has(lead.id)}
+            onToggle={() => toggleExpanded(lead.id)}
+          />
+        ))}
+      </div>
+
+      {/* ─── Layout tablet/desktop: tabela em grid ─── */}
+      <div className="hidden @tablet:block">
+        <TableContainer className="overflow-x-auto overflow-y-auto max-h-[62vh]">
+          <Table className="min-w-[1140px]">
+            <TableHeader sticky>
               <TableRow
                 className={twMerge(
                   gridCols,
-                  "hover:bg-secondary-25",
-                  isOpen && "bg-secondary-25",
+                  "bg-surface-table-header hover:bg-surface-table-header border-b border-stroke-100",
                 )}
               >
-                <TableCell className="flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => toggleExpanded(lead.id)}
-                    aria-label={isOpen ? "Recolher detalhes" : "Expandir detalhes"}
-                    aria-expanded={isOpen}
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-neutral-500 hover:bg-secondary-100 hover:text-neutral-800"
-                  >
-                    <Icon
-                      name="iconArrow2Down"
-                      className={twMerge(
-                        "h-4 w-4 transition-transform",
-                        isOpen && "rotate-180",
-                      )}
-                    />
-                  </button>
-                </TableCell>
-
-                <TableCell
-                  className="font-medium text-neutral-900 truncate"
-                  truncate
-                >
-                  {lead.name}
-                </TableCell>
-
-                <TableCell className="truncate" truncate>
-                  {lead.category ? (
-                    <span className="inline-flex items-center rounded-full bg-secondary-50 px-2 py-0.5 text-xs font-medium text-neutral-600 capitalize">
-                      {lead.category}
-                    </span>
-                  ) : (
-                    <EmptyDash />
-                  )}
-                </TableCell>
-
-                <TableCell className="truncate font-inter text-neutral-600" truncate>
-                  {lead.cnpj ? (
-                    <span title={maskCnpj(lead.cnpj)}>{maskCnpj(lead.cnpj)}</span>
-                  ) : (
-                    <EmptyDash />
-                  )}
-                </TableCell>
-
-                <TableCell className="text-neutral-600 truncate" truncate>
-                  {lead.address || <EmptyDash />}
-                </TableCell>
-
-                <TableCell>
-                  {lead.phone ? (
-                    <a
-                      href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap"
-                    >
-                      <Icon name="iconWhatsapp" className="w-4 h-4 shrink-0" />
-                      {maskPhone(lead.phone)}
-                    </a>
-                  ) : (
-                    <EmptyDash />
-                  )}
-                </TableCell>
-
-                <TableCell className="truncate" truncate>
-                  {lead.website ? (
-                    <a
-                      href={lead.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-primary-600 hover:text-primary-700 hover:underline truncate"
-                      title={lead.website}
-                    >
-                      <Icon name="iconWebsite" className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{prettyUrl(lead.website)}</span>
-                    </a>
-                  ) : (
-                    <EmptyDash />
-                  )}
-                </TableCell>
-
-                <TableCell className="truncate" truncate>
-                  {lead.instagram ? (
-                    <a
-                      href={lead.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-pink-600 hover:text-pink-700 hover:underline truncate"
-                      title={lead.instagram}
-                    >
-                      <Icon name="iconInstagram" className="w-4 h-4 shrink-0" />
-                      <span className="truncate">
-                        {instagramHandle(lead.instagram)}
-                      </span>
-                    </a>
-                  ) : (
-                    <EmptyDash />
-                  )}
-                </TableCell>
+                <TableHead className="text-center font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">
+                  <span className="sr-only">Detalhes</span>
+                </TableHead>
+                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Empresa</TableHead>
+                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Categoria</TableHead>
+                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">CNPJ</TableHead>
+                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Endereço</TableHead>
+                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Contato</TableHead>
+                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Website</TableHead>
+                <TableHead className="font-IbmPlexMono text-[11px] tracking-[0.05em] uppercase text-neutral-500 font-semibold">Instagram</TableHead>
               </TableRow>
-              {isOpen && <CnpjDetailsPanel lead={lead} />}
-              </div>
-            );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHeader>
+            <TableBody className="border-b-0">
+              {pageLeads.map((lead) => {
+                const isOpen = expanded.has(lead.id);
+                return (
+                  <div key={lead.id} className="border-b border-surface-table-divider last:border-b-0">
+                    <TableRow
+                      className={twMerge(
+                        gridCols,
+                        "transition-colors hover:bg-surface-table-hover",
+                        isOpen && "bg-surface-table-hover",
+                      )}
+                    >
+                      <TableCell className="flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(lead.id)}
+                          aria-label={isOpen ? "Recolher detalhes" : "Expandir detalhes"}
+                          aria-expanded={isOpen}
+                          className={twMerge(
+                            "flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border transition-colors",
+                            isOpen
+                              ? "border-primary-100 bg-primary-50 text-primary-500"
+                              : "border-stroke-100 bg-secondary-50 text-neutral-500 hover:bg-primary-25 hover:text-primary-500",
+                          )}
+                        >
+                          <Icon
+                            name="iconArrow2Down"
+                            className={twMerge(
+                              "h-4 w-4 transition-transform",
+                              isOpen && "rotate-180",
+                            )}
+                          />
+                        </button>
+                      </TableCell>
+
+                      <TableCell className="min-w-0" truncate>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className={twMerge(
+                              "w-2 h-2 shrink-0 rounded-full",
+                              situationDotClass(lead.situation),
+                            )}
+                          />
+                          <span className="truncate font-semibold text-neutral-900">
+                            {lead.name}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="truncate" truncate>
+                        {lead.category ? (
+                          <span className="inline-flex items-center rounded-full bg-primary-25 px-2.5 py-0.5 text-xs font-medium text-primary-400 capitalize">
+                            {lead.category}
+                          </span>
+                        ) : (
+                          <EmptyDash />
+                        )}
+                      </TableCell>
+
+                      <TableCell className="truncate font-IbmPlexMono text-[12.5px] text-neutral-600" truncate>
+                        {lead.cnpj ? (
+                          <span title={maskCnpj(lead.cnpj)}>{maskCnpj(lead.cnpj)}</span>
+                        ) : (
+                          <EmptyDash />
+                        )}
+                      </TableCell>
+
+                      <TableCell className="text-neutral-600 truncate" truncate>
+                        {lead.address || <EmptyDash />}
+                      </TableCell>
+
+                      <TableCell>
+                        {lead.phone ? (
+                          <WhatsappLink phone={lead.phone} />
+                        ) : (
+                          <EmptyDash />
+                        )}
+                      </TableCell>
+
+                      <TableCell className="truncate" truncate>
+                        {lead.website ? (
+                          <a
+                            href={lead.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-primary-500 hover:text-primary-600 hover:underline truncate"
+                            title={lead.website}
+                          >
+                            <Icon name="iconWebsite" className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{prettyUrl(lead.website)}</span>
+                          </a>
+                        ) : (
+                          <EmptyDash />
+                        )}
+                      </TableCell>
+
+                      <TableCell className="truncate" truncate>
+                        {lead.instagram ? (
+                          <a
+                            href={lead.instagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-pink-600 hover:text-pink-700 hover:underline truncate"
+                            title={lead.instagram}
+                          >
+                            <Icon name="iconInstagram" className="w-4 h-4 shrink-0" />
+                            <span className="truncate">
+                              {instagramHandle(lead.instagram)}
+                            </span>
+                          </a>
+                        ) : (
+                          <EmptyDash />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    {isOpen && <CnpjDetailsPanel lead={lead} />}
+                  </div>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
 
       <div className="border-t border-stroke-100">
         <Pagination

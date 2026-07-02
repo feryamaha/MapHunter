@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/script/Icon";
+import { Logo } from "@/components/dashboard-layout/Logo";
 
 const features = [
   {
@@ -23,25 +24,23 @@ const features = [
 
 export default function Home() {
   return (
-    <div className="h-screen overflow-y-auto bg-gradient-to-b from-primary-25 via-white to-secondary-50">
+    <div className="h-screen overflow-y-auto bg-surface-app">
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16">
-        <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-1.5 text-sm font-medium text-primary-600 shadow-10">
+        <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-1.5 font-inter text-sm font-medium text-primary-600 shadow-10">
           <Icon name="iconLeads" className="h-4 w-4" />
           Minerador de Leads B2B Regional
         </span>
 
-        <h1 className="text-center font-lato text-5xl font-bold tracking-tight text-neutral-900 @tablet:text-6xl">
-          Map<span className="text-primary-600">Hunter</span>
-        </h1>
+        <Logo size={56} showWordmark className="mb-6" />
 
-        <p className="mt-5 max-w-xl text-center font-inter text-lg text-neutral-600">
+        <p className="mt-2 max-w-xl text-center font-inter text-lg text-neutral-600">
           Descubra e qualifique empresas da sua região automaticamente.
           Transforme o mapa em uma lista de leads pronta para prospecção.
         </p>
 
         <Link
           href="/dashboard"
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary-600 px-8 py-3.5 font-inter text-base font-semibold text-white shadow-10 transition-colors hover:bg-primary-700"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-3.5 font-inter text-base font-semibold text-white shadow-10 transition-colors hover:bg-primary-600"
         >
           <Icon name="iconSearch" className="h-5 w-5" />
           Começar a buscar
@@ -53,7 +52,7 @@ export default function Home() {
               key={feature.title}
               className="flex flex-col gap-3 rounded-2xl border border-stroke-100 bg-white p-6 shadow-10"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-25 text-primary-600">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-25 text-primary-500">
                 <Icon name={feature.icon} className="h-5 w-5" />
               </span>
               <h3 className="font-lato text-lg font-bold text-neutral-900">

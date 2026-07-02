@@ -23,6 +23,45 @@ import { downloadCsv } from "@/utils/export-csv";
 import { downloadXlsx } from "@/utils/export-xlsx";
 import type { MenuItem } from "@/types/dashboard-layout/dropdown.types";
 
+function StatCard({
+  iconName,
+  value,
+  label,
+  tone,
+}: {
+  iconName: string;
+  value: number;
+  label: string;
+  tone: "primary" | "danger" | "success";
+}) {
+  const toneMap = {
+    primary: { bg: "bg-primary-25", fg: "text-primary-500" },
+    danger: {
+      bg: "bg-auxiliary-danger-background",
+      fg: "text-auxiliary-danger-default",
+    },
+    success: { bg: "bg-complementary-25", fg: "text-complementary-600" },
+  } as const;
+  const t = toneMap[tone];
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-stroke-100 bg-white p-5 shadow-10">
+      <div
+        className={`flex h-10 w-10 items-center justify-center rounded-xl ${t.bg}`}
+      >
+        <Icon name={iconName} className={`h-5 w-5 ${t.fg}`} />
+      </div>
+      <div>
+        <div className="font-lato text-3xl font-black leading-none tracking-[-0.5px] text-neutral-900">
+          {value}
+        </div>
+        <div className="mt-1 font-inter text-[13px] text-neutral-500">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const radiusParam = searchParams.get("radius");
@@ -113,6 +152,11 @@ function DashboardContent() {
 
   const hasResults = data.length > 0;
 
+  const totalLeads = data.length;
+  const semSite = data.filter((l) => !l.website).length;
+  const comWhatsapp = data.filter((l) => !!l.phone).length;
+  const ativos = data.filter((l) => l.situation === "ATIVA").length;
+
   // Build dropdown items for presence filter
   const presenceItems: MenuItem[] = presenceFilterOptions.map((opt) => ({
     label: opt.label,
@@ -147,6 +191,35 @@ function DashboardContent() {
         </div>
 
         <SearchBar onSubmit={handleSearch} defaults={initialParams} />
+
+        {hasResults && !loading && (
+          <div className="grid grid-cols-2 @laptop:grid-cols-4 gap-3.5">
+            <StatCard
+              iconName="iconLeads"
+              value={totalLeads}
+              label="Leads encontrados"
+              tone="primary"
+            />
+            <StatCard
+              iconName="iconWebsite"
+              value={semSite}
+              label="Sem site (oportunidade)"
+              tone="danger"
+            />
+            <StatCard
+              iconName="iconWhatsapp"
+              value={comWhatsapp}
+              label="Com WhatsApp"
+              tone="success"
+            />
+            <StatCard
+              iconName="iconDashboard"
+              value={ativos}
+              label="Empresas ativas"
+              tone="success"
+            />
+          </div>
+        )}
 
         {loading && (
           <Alerts
@@ -255,12 +328,7 @@ function DashboardContent() {
               </div>
             </div>
 
-            <div className="relative left-1/2 w-screen -translate-x-1/2 px-4 @tablet:px-8">
-              <LeadsTable
-                leads={filteredLeads}
-                className="mx-auto max-w-[1600px]"
-              />
-            </div>
+            <LeadsTable leads={filteredLeads} />
           </>
         )}
       </div>
