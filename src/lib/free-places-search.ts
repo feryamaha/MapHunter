@@ -12,6 +12,18 @@ export interface FreePlacesSearchResult {
   sources: string[];
 }
 
+// ─── Geocoding cache (per-instance, warm-start friendly) ─────────────────────
+// Vercel serverless instances are ephemeral, but caching still helps across
+// multiple searches hitting the same warm instance and avoids repeated Nominatim
+// / ViaCEP calls for the same location.
+
+const geocodeCache = new Map<string, { lat: number; lng: number }>();
+const cepCache = new Map<string, ResolvedCep>();
+
+function cacheKey(location: string): string {
+  return location.trim().toLowerCase();
+}
+
 // ─── Geocoding (Nominatim + ViaCEP — free, no key) ───────────────────────────
 
 interface NominatimResult {
@@ -56,6 +68,8 @@ const CEP_REGEX = /^\d{5}-?\d{3}$/;
 // municipal CEPs that ViaCEP does not index). Neither requires an API key.
 async function resolveCep(cep: string): Promise<ResolvedCep> {
   const digits = cep.replace(/\D/g, "");
+  const cached = cepCache.get(digits);
+  if (cached) return cached;
 
   // ── Provider 1: ViaCEP ──────────────────────────────────────────────
   try {
@@ -67,12 +81,14 @@ async function resolveCep(cep: string): Promise<ResolvedCep> {
       // ViaCEP returns erro as boolean true OR the string "true"
       const failed = data.erro === true || data.erro === "true";
       if (!failed && data.localidade && data.uf) {
-        return {
+        const resolved: ResolvedCep = {
           street: data.logradouro || null,
           neighborhood: data.bairro || null,
           city: data.localidade,
           state: data.uf,
         };
+        cepCache.set(digits, resolved);
+        return resolved;
       }
     }
   } catch {
@@ -90,7 +106,7 @@ async function resolveCep(cep: string): Promise<ResolvedCep> {
         const coords = data.location?.coordinates as
           | { longitude?: number; latitude?: number }
           | undefined;
-        return {
+        const resolved: ResolvedCep = {
           street: data.street || null,
           neighborhood: data.neighborhood || null,
           city: data.city,
@@ -98,6 +114,8 @@ async function resolveCep(cep: string): Promise<ResolvedCep> {
           lat: coords?.latitude,
           lng: coords?.longitude,
         };
+        cepCache.set(digits, resolved);
+        return resolved;
       }
     }
   } catch {
@@ -165,43 +183,54 @@ async function geocodeFreeText(
 
 async function geocode(location: string): Promise<{ lat: number; lng: number }> {
   const input = location.trim();
+  const key = cacheKey(input);
+  const cached = geocodeCache.get(key);
+  if (cached) return cached;
+
+  let result: { lat: number; lng: number } | null = null;
 
   if (CEP_REGEX.test(input)) {
     const resolved = await resolveCep(input);
 
     // 1) If the CEP provider already gave coordinates, use them directly.
     if (typeof resolved.lat === "number" && typeof resolved.lng === "number") {
-      return { lat: resolved.lat, lng: resolved.lng };
+      result = { lat: resolved.lat, lng: resolved.lng };
     }
 
     // 2) Try structured geocoding with street precision, then city fallback.
-    const withStreet = await geocodeStructured({
-      city: resolved.city,
-      state: resolved.state,
-      street: resolved.street,
-    });
-    if (withStreet) return withStreet;
-
-    const cityOnly = await geocodeStructured({
-      city: resolved.city,
-      state: resolved.state,
-    });
-    if (cityOnly) return cityOnly;
+    if (!result) {
+      result = await geocodeStructured({
+        city: resolved.city,
+        state: resolved.state,
+        street: resolved.street,
+      });
+    }
+    if (!result) {
+      result = await geocodeStructured({
+        city: resolved.city,
+        state: resolved.state,
+      });
+    }
 
     // 3) Last resort: free-text of the city name.
-    const freeText = await geocodeFreeText(`${resolved.city}, ${resolved.state}, Brasil`);
-    if (freeText) return freeText;
+    if (!result) {
+      result = await geocodeFreeText(`${resolved.city}, ${resolved.state}, Brasil`);
+    }
 
-    throw new Error(
-      `Não foi possível localizar o CEP "${location}" (${resolved.city}/${resolved.state}).`,
-    );
+    if (!result) {
+      throw new Error(
+        `Não foi possível localizar o CEP "${location}" (${resolved.city}/${resolved.state}).`,
+      );
+    }
+  } else {
+    // Plain city / place name search
+    result = await geocodeFreeText(input);
+    if (!result) {
+      throw new Error(`Localização não encontrada: "${location}"`);
+    }
   }
 
-  // Plain city / place name search
-  const result = await geocodeFreeText(input);
-  if (!result) {
-    throw new Error(`Localização não encontrada: "${location}"`);
-  }
+  geocodeCache.set(key, result);
   return result;
 }
 

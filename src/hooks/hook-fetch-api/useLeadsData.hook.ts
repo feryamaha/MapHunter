@@ -9,6 +9,8 @@ interface LeadsDataState {
   loading: boolean;
   error: string | null;
   sources: string[];
+  partial: boolean;
+  totalEnriched: number;
 }
 
 export function useLeadsData() {
@@ -17,12 +19,14 @@ export function useLeadsData() {
     loading: false,
     error: null,
     sources: [],
+    partial: false,
+    totalEnriched: 0,
   });
 
   const fetchLeads = async (
     params: SearchParams,
   ): Promise<{ leads: Lead[]; sources: string[] }> => {
-    setState({ data: [], loading: true, error: null, sources: [] });
+    setState({ data: [], loading: true, error: null, sources: [], partial: false, totalEnriched: 0 });
 
     try {
       const response = await fetch("/api/leads", {
@@ -39,7 +43,9 @@ export function useLeadsData() {
       const result = await response.json();
       const leads: Lead[] = result.leads ?? [];
       const sources: string[] = result.sources ?? [];
-      setState({ data: leads, loading: false, error: null, sources });
+      const partial = Boolean(result.partial);
+      const totalEnriched = Number(result.totalEnriched ?? 0);
+      setState({ data: leads, loading: false, error: null, sources, partial, totalEnriched });
       return { leads, sources };
     } catch (err) {
       setState({
@@ -47,18 +53,20 @@ export function useLeadsData() {
         loading: false,
         error: err instanceof Error ? err.message : "Erro desconhecido",
         sources: [],
+        partial: false,
+        totalEnriched: 0,
       });
       return { leads: [], sources: [] };
     }
   };
 
   const reset = () => {
-    setState({ data: [], loading: false, error: null, sources: [] });
+    setState({ data: [], loading: false, error: null, sources: [], partial: false, totalEnriched: 0 });
   };
 
   // Carrega um resultado salvo (histórico) sem tocar na API.
   const loadLeads = (leads: Lead[], sources: string[]) => {
-    setState({ data: leads, loading: false, error: null, sources });
+    setState({ data: leads, loading: false, error: null, sources, partial: false, totalEnriched: leads.length });
   };
 
   return {
@@ -66,6 +74,8 @@ export function useLeadsData() {
     loading: state.loading,
     error: state.error,
     sources: state.sources,
+    partial: state.partial,
+    totalEnriched: state.totalEnriched,
     fetchLeads,
     loadLeads,
     reset,

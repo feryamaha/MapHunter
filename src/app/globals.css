@@ -2,22 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'Lato';
-  font-style: normal;
-  font-weight: 600;
-  src: url('/assets/fonts/lato-600.woff2') format('truetype');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/assets/fonts/ibm-plex-mono.woff2') format('woff2');
-}
-
 html {
   height: 100%;
   overflow: hidden;
