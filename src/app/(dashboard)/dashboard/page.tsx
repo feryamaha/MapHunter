@@ -78,7 +78,7 @@ function DashboardContent() {
 
   const [hasSearched, setHasSearched] = useState(false);
   const [fromCache, setFromCache] = useState(false);
-  const { data, loading, error, sources, partial, totalEnriched, fetchLeads, loadLeads } =
+  const { data, loading, error, sources, fetchLeads, loadLeads } =
     useLeadsData();
   const {
     activeFilter,
@@ -261,22 +261,14 @@ function DashboardContent() {
 
         {!loading && !error && hasSearched && hasResults && (
           <Alerts
-            type={fromCache ? "info" : partial ? "warning" : "success"}
+            type={fromCache ? "info" : "success"}
             layout="flat"
             styleVariant="filled"
-            title={
-              fromCache
-                ? "Resultado salvo"
-                : partial
-                  ? "Busca parcial"
-                  : "Busca concluída!"
-            }
+            title={fromCache ? "Resultado salvo" : "Busca concluída!"}
             description={
               fromCache
                 ? `${data.length} leads carregados do histórico (sem consumir API), via ${sources.join(", ")}.`
-                : partial
-                  ? `${data.length} leads encontrados via ${sources.join(", ")}. ${totalEnriched} deles foram enriquecidos com CNPJ; os demais aparecem sem dados de CNPJ para evitar timeout.`
-                  : `${data.length} leads encontrados via ${sources.join(", ")}.`
+                : `${data.length} leads encontrados via ${sources.join(", ")}.`
             }
           />
         )}

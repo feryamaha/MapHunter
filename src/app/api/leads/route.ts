@@ -6,7 +6,6 @@ import { qualifyLead } from "@/lib/lead-qualifier";
 import { applyClassification } from "@/lib/lead-classifier";
 import { searchParamsSchema } from "@/schema/search-params.schema";
 import { rateLimit, clientKey } from "@/lib/rate-limit";
-import { Deadline, defaultRouteDeadlineMs } from "@/lib/deadline";
 import type { Lead, RawLead } from "@/types/dashboard-layout/lead.types";
 
 export const runtime = "nodejs";
@@ -15,10 +14,6 @@ export const maxDuration = 60;
 // Limite de requisições paralelas ao enriquecer via BrasilAPI/casadosdados.
 // Evita estourar rate limits das APIs gratuitas e o maxDuration da rota.
 const ENRICH_CONCURRENCY = 5;
-
-// Limita quantos leads serão enriquecidos com CNPJ. Buscas com raio grande
-// podem retornar centenas de leads; enriquecer todos estoura o timeout da Vercel.
-const MAX_LEADS_TO_ENRICH = Number(process.env.MAX_LEADS_TO_ENRICH ?? 80);
 
 const CEP_LIKE = /^\d{5}-?\d{3}$/;
 
@@ -69,9 +64,6 @@ export async function POST(request: NextRequest) {
     }
     const { location, radius, niche } = parsed.data;
 
-    // Deadline para evitar 504 Gateway Timeout. Vercel Hobby ~10s, Pro 60s.
-    const deadline = new Deadline(defaultRouteDeadlineMs());
-
     // Camada 1: Busca agregada (Overpass + BizData + Geoapify)
     const scrapingResult = await runScraping({ location, radius, niche });
 
@@ -111,38 +103,13 @@ export async function POST(request: NextRequest) {
       ufHint = ufMatch ? ufMatch[1]!.toUpperCase() : null;
     }
 
-    // Limita quantos leads vão para o enriquecimento CNPJ. O restante ainda
-    // aparece na tabela, só sem dados de CNPJ (status baseado no site/Instagram).
-    const leadsToEnrich = qualifiedLeads.slice(0, MAX_LEADS_TO_ENRICH);
-
     // Camada 2: Enriquecimento CNPJ (BrasilAPI) + Classificação.
     // Concorrência limitada para não sobrecarregar as APIs gratuitas.
     const timestamp = Date.now();
-    let skippedDueToDeadline = 0;
     const enrichedLeads: Lead[] = await mapWithConcurrency(
-      leadsToEnrich,
+      qualifiedLeads,
       ENRICH_CONCURRENCY,
       async (rawLead: RawLead, index: number) => {
-        // Se o tempo está acabando, devolve o lead sem enriquecer em vez de
-        // arriscar um 504 Gateway Timeout para todos os resultados.
-        if (deadline.isNearEnd(3000)) {
-          skippedDueToDeadline++;
-          return applyClassification({
-            id: `lead-${index}-${timestamp}`,
-            name: rawLead.name,
-            phone: rawLead.phone,
-            email: rawLead.email || "",
-            website: rawLead.website,
-            instagram: rawLead.instagram,
-            cnpj: null,
-            address: rawLead.address,
-            category: rawLead.category,
-            situation: null,
-            placeId: rawLead.placeId,
-            cnpjDetails: null,
-          });
-        }
-
         const cnpjData = await enrichWithCnpj({
           companyName: rawLead.name,
           address: rawLead.address,
@@ -177,15 +144,6 @@ export async function POST(request: NextRequest) {
       (lead) => lead.status !== "Inativa/Baixada",
     );
 
-    const isPartial =
-      qualifiedLeads.length > MAX_LEADS_TO_ENRICH || skippedDueToDeadline > 0;
-
-    if (isPartial) {
-      console.warn(
-        `[api/leads] Resultado parcial: ${activeLeads.length} ativos, ${qualifiedLeads.length} qualificados, ${skippedDueToDeadline} pulados por deadline.`,
-      );
-    }
-
     return NextResponse.json({
       leads: activeLeads,
       total: activeLeads.length,
@@ -193,9 +151,6 @@ export async function POST(request: NextRequest) {
       totalQualified: qualifiedLeads.length,
       totalExcluded: excludedCount,
       sources: scrapingResult.sources,
-      partial: isPartial,
-      totalEnriched: leadsToEnrich.length - skippedDueToDeadline,
-      skippedDueToDeadline,
     });
   } catch (error) {
     console.error("[api/leads] Error:", error);
