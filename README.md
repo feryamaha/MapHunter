@@ -1,6 +1,10 @@
 # MapHunter
 
+![MapHunter](public/assets/img/maphunter-cover-v2.png)
+
 > Minerador de Leads B2B Regional: transforme o mapa em uma lista de clientes potenciais pronta para prospecção.
+
+**Demo:** [map-hunter-xi.vercel.app](https://map-hunter-xi.vercel.app/)
 
 ## O problema
 
