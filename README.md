@@ -1,6 +1,6 @@
 # MapHunter
 
-![MapHunter](public/assets/img/maphunter-cover-v2.png)
+![MapHunter](public/assets/img/maphunter-cover-v3.png)
 
 > Minerador de Leads B2B Regional: transforme o mapa em uma lista de clientes potenciais pronta para prospecção.
 
